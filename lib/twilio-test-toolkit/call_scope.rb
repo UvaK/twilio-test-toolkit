@@ -41,12 +41,131 @@ module TwilioTestToolkit
     end
 
     # Stuff for Dials
-    def has_dial?(number)
+    def has_dial?(number = nil)
+      if number.nil?
+        return !(@xml.xpath("Dial").nil?)
+      end
       @xml.xpath("Dial").each do |s|
         return true if s.inner_text.include?(number)
       end
 
       return false
+    end
+
+    # Within dial returns a scope that's tied to the specified dial.
+    def within_dial(&block)
+      dial_el = get_dial_node
+      raise "No dial in scope" if dial_el.nil?
+      yield(CallScope.from_xml(self, dial_el))
+    end
+
+    # Stuff for dial
+    def dial?
+      @xml.name == "Dial"
+    end
+
+    def dial_action
+      raise "Not a dial" unless dial?
+      return @xml["action"]
+    end
+
+    def dial_method
+      raise "Not a dial" unless dial?
+      return @xml["method"]
+    end
+
+    def dial_timeout
+      raise "Not a dial" unless dial?
+      return @xml["timeout"]
+    end
+
+    def dial_hangup_on_star
+      raise "Not a dial" unless dial?
+      return @xml["hangupOnStar"]
+    end
+
+    def dial_time_limit
+      raise "Not a dial" unless dial?
+      return @xml["timeLimit"]
+    end
+
+    def dial_caller_id
+      raise "Not a dial" unless dial?
+      return @xml["callerId"]
+    end
+
+    def dial_record
+      raise "Not a dial" unless dial?
+      return @xml["record"]
+    end
+
+    def has_plain_number?
+      raise "Not a dial" unless dial?
+      return true if @xml.leaf? && @xml.text.include?(number)
+
+      @xml.xpath("Number").each do |s|
+        return true if s.text.include?(number)
+      end
+
+      return false
+    end
+
+    # Stuff for Conference
+    def has_conference?(conference)
+      raise "Not a dial" unless dial?
+      @xml.xpath("Conference").each do |s|
+        return true if s.text.include?(conference)
+      end
+
+      return false
+    end
+
+    def dial_within_conference(&block)
+      raise "Not a dial" unless dial?
+
+      conference_el = get_conference_node
+      raise "No Conference in scope" if conference_el.nil?
+      yield(CallScope.from_xml(self, conference_el))
+    end
+
+    # Stuff for conference
+    def conference?
+      @xml.name == "Conference"
+    end
+
+    def conference_muted
+      raise "Not a conference" unless conference?
+      return @xml["muted"]
+    end
+
+    def conference_beep
+      raise "Not a conference" unless conference?
+      return @xml["beep"]
+    end
+
+    def conference_start_conference_on_enter
+    raise "Not a conference" unless conference?
+      return @xml["startConferenceOnEnter"]
+    end
+
+    def conference_end_conference_on_exit
+      raise "Not a conference" unless conference?
+      return @xml["endConferenceOnExit"]
+    end
+
+    def conference_wait_url
+      raise "Not a conference" unless conference?
+      return @xml["waitUrl"]
+    end
+
+    def conference_wait_method
+      raise "Not a conference" unless conference?
+      return @xml["waitMethod"]
+    end
+
+    def conference_max_participants
+      raise "Not a conference" unless conference?
+      return @xml["maxParticipants"]
     end
 
     #Matches the specified action with action attribute on the dial element
@@ -95,8 +214,10 @@ module TwilioTestToolkit
       return @xml["finishOnKey"] || '#' # '#' is the default finish key if not specified
     end
 
-    def press(digits)
+    def press(digits, options = {})
       raise "Not a gather" unless gather?
+
+      method = options[:method] || :post
 
       # Fetch the path and then post
       path = gather_action
@@ -125,6 +246,14 @@ module TwilioTestToolkit
 
       def get_gather_node
         @xml.at_xpath("Gather")
+      end
+
+      def get_dial_node
+        @xml.at_xpath("Dial")
+      end
+
+      def get_conference_node
+        @xml.at_xpath("Conference")
       end
 
       def formatted_digits(digits, options = {})

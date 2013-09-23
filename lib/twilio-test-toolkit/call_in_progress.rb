@@ -25,8 +25,10 @@ module TwilioTestToolkit
       # We are the root call
       self.root_call = self
 
+      params = { :method => @method, :is_machine => @is_machine }
+      params[:request_params] = options[:request_params] unless options[:request_params].nil?
       # Create the request
-      request_for_twiml!(@initial_path, :method => @method, :is_machine => @is_machine)
+      request_for_twiml!(@initial_path, params)
     end
 
     def sid

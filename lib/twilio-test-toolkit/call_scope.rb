@@ -305,14 +305,18 @@ module TwilioTestToolkit
 
         # Post the query
         rack_test_session_wrapper = Capybara.current_session.driver
-        @response = rack_test_session_wrapper.send(options[:method] || :post, @current_path,
+
+        params = {
           :format => :xml,
           :CallSid => @root_call.sid,
           :From => @root_call.from_number,
           :Digits => formatted_digits(options[:digits], :finish_on_key => options[:finish_on_key]),
           :To => @root_call.to_number,
           :AnsweredBy => (options[:is_machine] ? "machine" : "human")
-        )
+        }
+        params.merge!(options[:request_params]) unless options[:request_params].nil?
+
+        @response = rack_test_session_wrapper.send(options[:method] || :post, @current_path, params)
 
         # All Twilio responses must be a success.
         raise "Bad response: #{@response.status}" unless @response.status == 200

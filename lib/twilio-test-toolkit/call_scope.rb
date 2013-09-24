@@ -43,7 +43,7 @@ module TwilioTestToolkit
     # Stuff for Dials
     def has_dial?(number = nil)
       if number.nil?
-        return !(@xml.xpath("Dial").nil?)
+        return !@xml.xpath("Dial").count.zero?
       end
       @xml.xpath("Dial").each do |s|
         return true if s.inner_text.include?(number)
@@ -81,7 +81,7 @@ module TwilioTestToolkit
 
     def dial_hangup_on_star
       raise "Not a dial" unless dial?
-      return @xml["hangupOnStar"]
+      return make_bool(@xml["hangupOnStar"])
     end
 
     def dial_time_limit
@@ -96,7 +96,7 @@ module TwilioTestToolkit
 
     def dial_record
       raise "Not a dial" unless dial?
-      return @xml["record"]
+      return make_bool(@xml["record"])
     end
 
     def has_plain_number?
@@ -135,22 +135,22 @@ module TwilioTestToolkit
 
     def conference_muted
       raise "Not a conference" unless conference?
-      return @xml["muted"]
+      return make_bool(@xml["muted"])
     end
 
     def conference_beep
       raise "Not a conference" unless conference?
-      return @xml["beep"]
+      return make_bool(@xml["beep"])
     end
 
     def conference_start_conference_on_enter
     raise "Not a conference" unless conference?
-      return @xml["startConferenceOnEnter"]
+      return make_bool(@xml["startConferenceOnEnter"])
     end
 
     def conference_end_conference_on_exit
       raise "Not a conference" unless conference?
-      return @xml["endConferenceOnExit"]
+      return make_bool(@xml["endConferenceOnExit"])
     end
 
     def conference_wait_url
@@ -240,6 +240,13 @@ module TwilioTestToolkit
     end
 
     private
+      def make_bool(s)
+        return s if s.nil?
+        return true if 'true' == s.downcase
+        return false if 'false' == s.downcase
+        s
+      end
+
       def get_redirect_node
         @xml.at_xpath("Redirect")
       end
